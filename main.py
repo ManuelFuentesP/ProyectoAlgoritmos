@@ -2,6 +2,8 @@ from Producto import Producto
 import requests
 import json
 
+#revisar si se agrega el producto bien con su id
+
 def crearProducto (id_producto,name,description,price,category,inventory,compatible_vehicles,productos_objeto,productos):
     nuevo_producto = Producto(id_producto,name,description,price,category,inventory,compatible_vehicles)
     productos_objeto.append(nuevo_producto)
