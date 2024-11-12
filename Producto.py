@@ -7,3 +7,6 @@ class Producto():
         self.category = category
         self.inventory = inventory
         self.compatible_vehicles = compatible_vehicles
+    
+    def mostrar_producto(self):
+        return (f"Id:{self.id}, Nombre:{self.name}, Description:{self.description}, Price:{self.price}")
