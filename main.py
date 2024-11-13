@@ -46,16 +46,8 @@ def main():
         [7] » Salir
         """)
         if gestion == "1":
-            option = """Ingrese la opción de que desea realizar
-            [1] » Agregar nuevo producto
-            [2] » Buscar producto
-            [3] » Modificar la información
-            [3] » Gestión de clientes 
-            [4] » Eliminar producto
-            """
-            if option == "1":
-                with open('productos.json', 'r', encoding='utf-8') as archivo_productos:
-                    datos_productos = json.load(archivo_productos)
+            with open('productos.json', 'r', encoding='utf-8') as archivo_productos:
+                datos_productos = json.load(archivo_productos)
 
                 # Verificar si hay productos en el JSON
                 if datos_productos:
@@ -74,17 +66,16 @@ def main():
                 inventario = input("Ingrese el inventario")
                 modelo_vehiculo = input("Ingrese el modelo del vehiculo")
                 producto = Producto(id_prod, nombre,descripcion,precio,categoria,inventario,modelo_vehiculo)
-                productos.append(producto)
-                print(producto.mostrar_producto())
-                print (productos)
-            elif option == "2":
-                print (2)
-            elif option == "3":
-                print (3)
-            elif option == "4":
-                print (1)
-            else: 
-                break 
+                productos.append(producto.mostrar_producto())
+                print(productos)
+
+                # Guardar la lista de productos actualizada en el archivo JSON
+                # el parámetro ensure_ascii es un argumento de la función json.dump() o json.dumps() que controla cómo se manejan los caracteres no ASCII (como caracteres especiales, acentos, letras en otros alfabetos, etc.) al guardar datos en formato JSON.
+                with open('productos.json', 'w', encoding='utf-8') as archivo_productos:
+                    json.dump(datos_productos, archivo_productos, ensure_ascii=False, indent=2)
+
+                print("Producto agregado con éxito.")
+            
         elif gestion == "2":
             print (2)
         elif gestion == "3":
