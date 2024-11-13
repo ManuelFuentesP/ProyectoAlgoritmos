@@ -3,7 +3,7 @@
     "id": 1,
     "name": "Aceite para diferencial 1",
     "description": "Alta calidad",
-    "price": 64.14,
+    "price": "65",
     "category": "aceites",
     "inventory": 347,
     "compatible_vehicles": [
