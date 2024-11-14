@@ -9,6 +9,74 @@ def crearProducto (id_producto,name,description,price,category,inventory,compati
     productos_objeto.append(nuevo_producto)
     productos.append(nuevo_producto.mostrar_producto())
 
+def buscarProductosPorCategoria(productos_objeto):
+    '''
+    Función que muestra los productos según la categoría seleccionada.
+    Muestra una lista de categorías disponibles y permite al usuario seleccionar una para ver los productos correspondientes.
+    '''
+    categorias = set(producto.category for producto in productos_objeto)
+    categorias = list(categorias)
+    
+    print("Categorías disponibles:")
+    for i, categoria in enumerate(categorias):
+        print(f"{i + 1} -- {categoria}")
+
+    opcion = input("Ingrese el número de la categoría que desea buscar: ")
+    if opcion.isnumeric() and 1 <= int(opcion) <= len(categorias):
+        categoria_seleccionada = categorias[int(opcion) - 1]
+        print(f"Productos en la categoría '{categoria_seleccionada}':")
+        for producto in productos_objeto:
+            if producto.category == categoria_seleccionada:
+                print(producto.mostrar_producto())
+    else:
+        print("Opción inválida")
+
+
+def buscarProductosPorPrecio(productos_objeto):
+    '''
+    Función que permite buscar productos dentro de un rango de precios.
+    Solicita al usuario que ingrese el rango de precios y muestra los productos dentro de ese rango.
+    '''
+    try:
+        precio_min = float(input("Ingrese el precio mínimo: "))
+        precio_max = float(input("Ingrese el precio máximo: "))
+        print(f"Productos con precio entre {precio_min} y {precio_max}:")
+
+        for producto in productos_objeto:
+            if precio_min <= producto.price <= precio_max:
+                print(producto.mostrar_producto())
+    except ValueError:
+        print("Por favor, ingrese valores numéricos válidos para los precios.")
+
+
+def buscarProductosPorNombre(productos_objeto):
+    '''
+    Función que permite buscar productos por nombre.
+    Solicita al usuario el nombre o parte del nombre y muestra los productos correspondientes.
+    '''
+    nombre = input("Ingrese el nombre o parte del nombre del producto que desea buscar: ").lower()
+    print(f"Productos que contienen '{nombre}' en su nombre:")
+
+    for producto in productos_objeto:
+        if nombre in producto.name.lower():
+            print(producto.mostrar_producto())
+
+
+def buscarProductosPorDisponibilidad(productos_objeto):
+    '''
+    Función que muestra los productos disponibles en inventario según la cantidad mínima especificada.
+    Solicita al usuario que ingrese una cantidad mínima y muestra los productos con inventario igual o mayor a esa cantidad.
+    '''
+    try:
+        cantidad_minima = int(input("Ingrese la cantidad mínima de inventario: "))
+        print(f"Productos con inventario mayor o igual a {cantidad_minima} unidades:")
+
+        for producto in productos_objeto:
+            if producto.inventory >= cantidad_minima:
+                print(producto.mostrar_producto())
+    except ValueError:
+        print("Por favor, ingrese un valor numérico válido para la cantidad mínima.")
+
 def modificarProducto(id_producto, productos_objeto, productos):
     '''
     Función para modificar la información de un producto existente.
@@ -215,13 +283,15 @@ def main():
                 [4] » Disponibilidad en inventario
                 """)
                 if criterio == "1":
-                    print ("1")
+                    buscarProductosPorCategoria(productos_objeto)
                 elif criterio == "2":
-                    print ("2")
+                    buscarProductosPorPrecio(productos_objeto)
                 elif criterio == "3":
-                    print ("4")
+                    buscarProductosPorNombre(productos_objeto)
                 elif criterio =="4":
-                    print ("6")
+                    buscarProductosPorDisponibilidad(productos_objeto)
+                else: 
+                    break
             elif opcion == "3":
                 print ("Modificar información de productos existentes")
                 # Solicitar al usuario el ID del producto que desea modificar
