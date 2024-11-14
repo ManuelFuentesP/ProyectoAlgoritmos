@@ -2,6 +2,8 @@ from Producto import Producto
 import requests
 import json
 
+from Cliente import Cliente
+from ClienteJuridico import ClienteJuridico
 #revisar si se agrega el producto bien con su id
 
 def crearProducto (id_producto,name,description,price,category,inventory,compatible_vehicles,productos_objeto,productos):
@@ -194,6 +196,7 @@ def main():
     info_equipos = open('productos.json','wb')
     info_equipos.write(contenido_productos)
     info_equipos.close()
+    clientes = []
 
     # utf-8 para que se muestren los nombres con los acentos bien 
     with open('productos.json', 'r', encoding='utf-8') as archivo_productos:
@@ -305,7 +308,24 @@ def main():
         elif gestion == "2":
             print (2)
         elif gestion == "3":
-            print ("hola")
+            nombre_apellido = input ("Ingrese el Nombre y Apellido o Razón Social")
+            cedula = input ("Ingrese el numero de cedula")
+            correo = input ("Ingrese su correo electronico")
+            direccion = input ("Ingrese su dirección de envio")
+            telefono = input ("Ingrese su telefono")
+            es_juridico = input ("Es cliente jurídico: (1)-Si (2)-No")
+            if es_juridico == "Si":
+                print("Es persona jurídica")
+                nombre_contacto = input("Ingrese el nombre de la persona de contacto")
+                telefono_contacto = input("Ingrese el telefono de la persona de contacto")
+                correo_contacto = input("Ingrese el correo de la persona de contacto")
+                cliente_juridico = ClienteJuridico(nombre_apellido,cedula,correo,direccion,telefono,nombre_contacto,telefono_contacto,correo_contacto)
+                clientes.append(cliente_juridico)
+                print (cliente_juridico.mostrarCliente())
+            else: 
+                cliente = Cliente(nombre_apellido,cedula,correo,direccion,telefono)
+                clientes.append(cliente)
+                print (cliente.mostrarCliente())
         elif gestion == "4":
             print (2)
         elif gestion == "5":
