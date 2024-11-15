@@ -4,6 +4,7 @@ import json
 
 from Cliente import Cliente
 from ClienteJuridico import ClienteJuridico
+from Venta import Venta
 #revisar si se agrega el producto bien con su id
 
 def crearProducto (id_producto,name,description,price,category,inventory,compatible_vehicles,productos_objeto,productos):
@@ -63,6 +64,49 @@ def buscarProductosPorNombre(productos_objeto):
         if nombre in producto.name.lower():
             print(producto.mostrar_producto())
 
+def comprarProductosPorNombre(productos_objeto):
+    '''
+    Función que permite buscar productos por nombre.
+    Solicita al usuario el nombre o parte del nombre y muestra los productos correspondientes.
+    Permite registrar múltiples productos comprados y la cantidad de cada uno.
+    '''
+    productos_comprados = []  # Lista para almacenar los productos comprados y sus cantidades
+
+    while True:
+        nombre = input("Ingrese el nombre o parte del nombre del producto que desea buscar (o 'salir' para finalizar): ").lower()
+        if nombre == 'salir':
+            break  # Si el usuario escribe 'salir', terminar el ciclo de compra
+
+        print(f"\nProductos que contienen '{nombre}' en su nombre:")
+        productos_encontrados = [producto for producto in productos_objeto if nombre in producto.name.lower()]
+
+        if not productos_encontrados:
+            print("No se encontraron productos con ese nombre.")
+            continue  # Continuar buscando productos si no se encuentra ninguno
+
+        # Mostrar todos los productos encontrados
+        for idx, producto in enumerate(productos_encontrados, start=1):
+            print(f"{idx}. {producto.mostrar_producto()}")
+
+        while True:
+            try:
+                seleccion = int(input("\nIngrese el número del producto que desea comprar (0 para salir de la búsqueda): "))
+                if seleccion == 0:
+                    break  # Salir del bucle de selección de productos
+                if 1 <= seleccion <= len(productos_encontrados):
+                    producto_seleccionado = productos_encontrados[seleccion - 1]
+                    cantidad = int(input(f"Ingrese la cantidad de '{producto_seleccionado.name}' que desea comprar: "))
+                    if cantidad > 0:
+                        productos_comprados.append({'producto': producto_seleccionado, 'cantidad': cantidad})
+                        print(f"Se agregó {cantidad} unidad(es) de '{producto_seleccionado.name}' a su carrito.")
+                    else:
+                        print("La cantidad debe ser mayor que 0.")
+                else:
+                    print("Por favor, seleccione un número válido.")
+            except ValueError:
+                print("Entrada no válida. Intente nuevamente.")
+
+    return productos_comprados
 
 def buscarProductosPorDisponibilidad(productos_objeto):
     '''
@@ -296,20 +340,22 @@ def eliminar_cliente_json(cedula_buscar):
 def buscar_cliente_por_cedula(cedula_buscar):
     # Cargar los clientes desde el archivo JSON
     clientes_data = cargar_clientes_json()
-    
+
     # Buscar el cliente por su cédula o RIF
-    cliente_encontrado = None
     for cliente in clientes_data:
-        if cliente["cedula"] == cedula_buscar:
-            cliente_encontrado = cliente
-            break
-    
-    if cliente_encontrado:
-        # Si el cliente es encontrado, mostrar los datos
-        print("Cliente encontrado:")
-        print(cliente_encontrado)
-    else:
-        print(f"Cliente con cédula/RIF {cedula_buscar} no encontrado.")
+        cliente_cedula = cliente["cedula"].strip()  # Eliminar espacios alrededor
+        cedula_buscar = cedula_buscar.strip()  # Eliminar espacios alrededor
+
+        # Imprimir ambas cédulas para depuración
+        print(f"Comparando cédulas: '{cliente_cedula}' == '{cedula_buscar}'")
+
+        if cliente_cedula == cedula_buscar:
+            print("Cliente encontrado:")
+            print(cliente)
+            return True  # Cliente encontrado, devolver True
+
+    print(f"Cliente con cédula/RIF {cedula_buscar} no encontrado.")
+    return False  # Cliente no encontrado, devolver False
 
 def buscar_cliente_por_correo(correo_buscar):
     # Cargar los clientes desde el archivo JSON
@@ -339,8 +385,9 @@ def main():
     info_equipos.write(contenido_productos)
     info_equipos.close()
     clientes = []
-    clientes = []
     clientes_objeto =[]
+    productos_comprados =[]
+    ventas = []
 
     # utf-8 para que se muestren los nombres con los acentos bien 
     with open('productos.json', 'r', encoding='utf-8') as archivo_productos:
@@ -451,7 +498,178 @@ def main():
                 break     
         elif gestion == "2":
             print ("registrar venta")
-            registrar_venta(clientes)
+            mod2 = input ("Ingrese la opcion que desea realizar (1)-Registrar Venta (2)-Generar Factura (3)-Buscar Ventas (4)-Salir")
+            if mod2 == "1":
+                print ("1")
+                cliente_a_buscar = input("Ingrese la cédula o RIF del cliente a buscar: ")
+                if buscar_cliente_por_cedula(cliente_a_buscar):
+                    num_cedula = cliente_a_buscar
+                    print(f"Número de cédula {num_cedula} guardado.")
+                else:
+                    print("El número de cédula no será guardado porque el cliente no fue encontrado.")
+                
+                productos_comprados = comprarProductosPorNombre(productos_objeto)
+
+                if productos_comprados:
+                    print("\nResumen de productos comprados:")
+                    total = 0  # Inicializar el total
+                    subtotal = 0  # Inicializar el subtotal
+                    descuento = 0  # Inicializar el descuento
+                    iva = 0  # Inicializar el IVA
+                    igtf = 0  # Inicializar el IGTF
+                    
+                    # Lista para guardar los productos con su cantidad
+                    productos_guardados = []
+
+                    # Selección del método de pago por parte del usuario
+                    metodo_pago = None
+                    while metodo_pago not in ['efectivo', 'tarjeta', 'transferencia']:
+                        metodo_pago = input("Selecciona el método de pago (efectivo, tarjeta, transferencia): ").lower()
+                        if metodo_pago not in ['efectivo', 'tarjeta', 'transferencia']:
+                            print("Método de pago no válido. Por favor selecciona uno de los métodos válidos.")
+
+                    paga_en_divisas = False  # Cambiar a True si paga en divisas
+
+                    for item in productos_comprados:
+                        # Asegúrate de que item tiene las claves correctas
+                        producto = item.get('producto')  # Usar .get para evitar errores si la clave no existe
+                        cantidad = item.get('cantidad')
+
+                        if producto and cantidad:  # Verificar que ambos datos existan
+                            precio_unitario = getattr(producto, 'price', 0)  # Obtener precio o 0 si no existe
+                            subtotal_producto = precio_unitario * cantidad
+                            subtotal += subtotal_producto  # Acumular subtotal en el subtotal general
+                            total += subtotal_producto  # Acumular el total general
+                            print(f"Producto: {producto.name}, Cantidad: {cantidad}, Precio Unitario: {precio_unitario}, Subtotal: {subtotal_producto}")
+                            
+                            # Guardar nombre y cantidad en la lista
+                            productos_guardados.append({'nombre': producto.name, 'cantidad': cantidad})
+
+                        else:
+                            print("Error: Datos del producto incompletos.")
+
+                    # Determinar si aplica descuento (suponiendo que hay un campo 'tipo_cliente' que indica si es jurídico)
+                    cliente_es_juridico = False  # Asumir que no es jurídico por defecto, cambiarlo si es necesario
+                    pago_contado = (metodo_pago == 'efectivo')  # Si es pago en efectivo, aplicar descuento
+
+                    if cliente_es_juridico and pago_contado:
+                        descuento = subtotal * 0.05  # 5% de descuento si es jurídico y paga en efectivo
+
+                    # Calcular IVA (16%)
+                    iva = subtotal * 0.16
+
+                    # Calcular IGTF (3%) si paga en divisas
+                    if paga_en_divisas:
+                        igtf = subtotal * 0.03
+
+                    # Calcular el total final
+                    total_con_descuentos_iva_igtf = subtotal - descuento + iva + igtf
+
+                    # Mostrar el desglose
+                    print(f"\nSubtotal: {subtotal}")
+                    if descuento > 0:
+                        print(f"Descuento (5%): -{descuento}")
+                    if iva > 0:
+                        print(f"IVA (16%): +{iva}")
+                    if igtf > 0:
+                        print(f"IGTF (3%): +{igtf}")
+                    print(f"\nTotal a pagar: {total_con_descuentos_iva_igtf}")
+
+                    # Mostrar los productos guardados con su cantidad
+                    print("\nProductos comprados y cantidades:")
+                    for producto in productos_guardados:
+                        print(f"Producto: {producto['nombre']}, Cantidad: {producto['cantidad']}")
+
+                else:
+                    print("\nNo se registraron productos comprados.")
+                
+                metodo_envio = input ("Ingrese metodo de envio Zoom o Delivery por moto")
+                
+                venta = Venta(num_cedula,productos_comprados, metodo_pago, metodo_envio, total_con_descuentos_iva_igtf)
+                ventas.append(venta)
+                    
+            elif mod2 == "2":
+                print("\nGenerando factura...")
+    
+                # Verificar que exista alguna venta
+                if len(ventas) > 0:
+                    # Asumimos que la última venta es la que se necesita
+                    venta = ventas[-1]  # Tomamos la última venta registrada
+
+                    # Información de la venta
+                    num_cedula = venta.ced
+                    productos_comprados = venta.productos_comprados
+                    metodo_pago = venta.metodo_pago
+                    metodo_envio = venta.metodo_envio
+                    total = venta.total
+
+                    # Preguntar si el cliente es jurídico o natural
+                    while True:
+                        tipo_cliente = input("¿El cliente es jurídico o natural? (jurídico/natural): ").lower()
+                        if tipo_cliente in ['jurídico', 'natural']:
+                            cliente_es_juridico = tipo_cliente == 'jurídico'  # Determinar si es jurídico
+                            break
+                        else:
+                            print("Opción no válida. Por favor ingrese 'jurídico' o 'natural'.")
+
+                    pago_en_credito = False
+
+                    # Si el cliente es jurídico, preguntar si desea pagar a crédito
+                    if cliente_es_juridico:
+                        print("El cliente es jurídico.")
+                        while True:
+                            opcion_pago_credito = input("¿Desea pagar a crédito? (15 días o 30 días): ").lower()
+                            if opcion_pago_credito in ['15 días', '30 días']:
+                                pago_en_credito = True
+                                print(f"Pago a crédito seleccionado: {opcion_pago_credito}")
+                                break
+                            else:
+                                print("Opción no válida. Elija entre '15 días' o '30 días'.")
+                    else:
+                        print("El cliente es natural, se procederá con pago inmediato.")
+
+                    # Si es pago inmediato, se debe verificar que el método de pago sea adecuado
+                    if not cliente_es_juridico or metodo_pago != 'efectivo':  # Solo si es natural o pago no es efectivo
+                        print("\nFactura generada para pago inmediato.")
+                    else:
+                        print("\nFactura generada para pago a crédito.")
+                    
+                    # Mostrar la factura
+                    print("\nFactura:")
+                    print(f"Cédula/RIF del cliente: {num_cedula}")
+                    print(f"Método de pago: {metodo_pago.capitalize()}")
+                    print(f"Método de envío: {metodo_envio.capitalize()}")
+                    
+                    # Mostrar productos comprados
+                    print("\nProductos comprados:")
+                    for item in productos_comprados:
+                        producto = item.get('producto')
+                        cantidad = item.get('cantidad')
+                        if producto and cantidad:
+                            precio_unitario = getattr(producto, 'price', 0)
+                            subtotal_producto = precio_unitario * cantidad
+                            print(f"Producto: {producto.name}, Cantidad: {cantidad}, Precio Unitario: {precio_unitario}, Subtotal: {subtotal_producto}")
+
+                    # Mostrar desglose de la factura
+                    print(f"\nSubtotal: {total - iva - descuento - igtf}")
+                    if descuento > 0:
+                        print(f"Descuento: -{descuento}")
+                    if iva > 0:
+                        print(f"IVA (16%): +{iva}")
+                    if igtf > 0:
+                        print(f"IGTF (3%): +{igtf}")
+                    
+                    print(f"\nTotal a pagar: {total}")
+
+                    if pago_en_credito:
+                        print("\nEste es un pago a crédito. El cliente tiene un plazo de 15 o 30 días para realizar el pago.")
+
+                else:
+                    print("No se ha registrado ninguna venta para generar la factura.")
+            elif mod2 == "3":
+                print ("3")
+            else: 
+                break
         elif gestion == "3":
             opt = input("""Ingrese la opcion
             [1] » Registrar cliente
@@ -496,7 +714,14 @@ def main():
                     correo_a_buscar = input("Ingrese el correo electrónico del cliente a buscar: ")
                     buscar_cliente_por_correo(correo_a_buscar)
         elif gestion == "4":
-            print (2)
+            print ("Gestion de pago")
+            cliente_pago = input("Ingrese la cédula o RIF del cliente a buscar: ")
+            if buscar_cliente_por_cedula(cliente_pago):
+                num_cedula = cliente_pago
+                print(f"Número de cédula {num_cedula} guardado.")
+            else:
+                print("El número de cédula no será guardado porque el cliente no fue encontrado.")
+                
         elif gestion == "5":
             print (5)
         else:
