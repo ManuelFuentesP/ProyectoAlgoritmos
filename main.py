@@ -450,7 +450,8 @@ def main():
             else: 
                 break     
         elif gestion == "2":
-            print (2)
+            print ("registrar venta")
+            registrar_venta(clientes)
         elif gestion == "3":
             opt = input("""Ingrese la opcion
             [1] » Registrar cliente
