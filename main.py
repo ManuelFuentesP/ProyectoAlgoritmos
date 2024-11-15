@@ -187,6 +187,148 @@ def eliminarProducto(id_producto, productos_objeto, productos):
     else:
         print(f"Producto con ID {id_producto} no encontrado.")
 
+# Función para agregar cliente al archivo JSON
+def agregar_cliente_json(cliente):
+    # Convertir el objeto cliente en un diccionario
+    if isinstance(cliente, ClienteJuridico):
+        cliente_data = {
+            "nombre_apellido": cliente.nombre_apellido,
+            "cedula": cliente.cedula,
+            "correo": cliente.correo,
+            "direccion": cliente.direccion,
+            "telefono": cliente.telefono,
+            "nombre_contacto": cliente.nombre_contacto,
+            "telefono_contacto": cliente.telefono_contacto,
+            "correo_contacto": cliente.correo_contacto,
+            "tipo": "Juridico"
+        }
+    else:
+        cliente_data = {
+            "nombre_apellido": cliente.nombre_apellido,
+            "cedula": cliente.cedula,
+            "correo": cliente.correo,
+            "direccion": cliente.direccion,
+            "telefono": cliente.telefono,
+            "tipo": "Natural"
+        }
+    
+    # Leer el contenido existente en el archivo JSON (si existe)
+    try:
+        with open("clientes.json", "r") as file:
+            clientes_data = json.load(file)
+    except (FileNotFoundError, json.JSONDecodeError):
+        clientes_data = []
+
+    # Agregar el nuevo cliente a la lista de datos
+    clientes_data.append(cliente_data)
+
+    # Guardar todos los datos de clientes en el archivo JSON
+    with open("clientes.json", "w") as file:
+        json.dump(clientes_data, file, indent=4)
+
+def cargar_clientes_json():
+    try:
+        with open("clientes.json", "r") as file:
+            clientes_data = json.load(file)
+        return clientes_data
+    except (FileNotFoundError, json.JSONDecodeError):
+        return []
+
+def modificar_cliente_json(cedula_buscar):
+    clientes_data = cargar_clientes_json()  # Llamar a la función que carga los datos desde el archivo
+    
+    # Buscar el cliente por su cédula
+    cliente_encontrado = None
+    for cliente in clientes_data:
+        if cliente["cedula"] == cedula_buscar:
+            cliente_encontrado = cliente
+            break
+    
+    if cliente_encontrado:
+        print("Cliente encontrado:")
+        print(cliente_encontrado)
+
+        # Modificar los datos del cliente
+        print("Ingrese los nuevos datos o presione Enter para dejar el valor actual:")
+        
+        cliente_encontrado["nombre_apellido"] = input(f"Nombre y Apellido/Razón Social ({cliente_encontrado['nombre_apellido']}): ") or cliente_encontrado["nombre_apellido"]
+        cliente_encontrado["correo"] = input(f"Correo electrónico ({cliente_encontrado['correo']}): ") or cliente_encontrado["correo"]
+        cliente_encontrado["direccion"] = input(f"Dirección ({cliente_encontrado['direccion']}): ") or cliente_encontrado["direccion"]
+        cliente_encontrado["telefono"] = input(f"Teléfono ({cliente_encontrado['telefono']}): ") or cliente_encontrado["telefono"]
+        
+        # Si el cliente es jurídico, modificar los datos adicionales
+        if cliente_encontrado["tipo"] == "Juridico":
+            cliente_encontrado["nombre_contacto"] = input(f"Nombre del contacto ({cliente_encontrado['nombre_contacto']}): ") or cliente_encontrado["nombre_contacto"]
+            cliente_encontrado["telefono_contacto"] = input(f"Teléfono de contacto ({cliente_encontrado['telefono_contacto']}): ") or cliente_encontrado["telefono_contacto"]
+            cliente_encontrado["correo_contacto"] = input(f"Correo de contacto ({cliente_encontrado['correo_contacto']}): ") or cliente_encontrado["correo_contacto"]
+        
+        # Guardar los datos actualizados en el archivo JSON (sin llamar a agregar_cliente_json)
+        with open("clientes.json", "w") as file:
+            json.dump(clientes_data, file, indent=4)
+        
+        print("Información del cliente actualizada correctamente.")
+    else:
+        print("Cliente no encontrado.")
+
+def eliminar_cliente_json(cedula_buscar):
+    # Cargar los clientes desde el archivo JSON
+    clientes_data = cargar_clientes_json()
+    
+    # Buscar el cliente por su cédula
+    cliente_encontrado = None
+    for cliente in clientes_data:
+        if cliente["cedula"] == cedula_buscar:
+            cliente_encontrado = cliente
+            break
+    
+    if cliente_encontrado:
+        # Eliminar el cliente de la lista
+        clientes_data.remove(cliente_encontrado)
+        
+        # Guardar los datos actualizados en el archivo JSON
+        with open("clientes.json", "w") as file:
+            json.dump(clientes_data, file, indent=4)
+        
+        print(f"Cliente con cédula {cedula_buscar} eliminado correctamente.")
+    else:
+        print("Cliente no encontrado.")
+
+def buscar_cliente_por_cedula(cedula_buscar):
+    # Cargar los clientes desde el archivo JSON
+    clientes_data = cargar_clientes_json()
+    
+    # Buscar el cliente por su cédula o RIF
+    cliente_encontrado = None
+    for cliente in clientes_data:
+        if cliente["cedula"] == cedula_buscar:
+            cliente_encontrado = cliente
+            break
+    
+    if cliente_encontrado:
+        # Si el cliente es encontrado, mostrar los datos
+        print("Cliente encontrado:")
+        print(cliente_encontrado)
+    else:
+        print(f"Cliente con cédula/RIF {cedula_buscar} no encontrado.")
+
+def buscar_cliente_por_correo(correo_buscar):
+    # Cargar los clientes desde el archivo JSON
+    clientes_data = cargar_clientes_json()
+    
+    # Buscar el cliente por su correo electrónico
+    cliente_encontrado = None
+    for cliente in clientes_data:
+        if cliente["correo"] == correo_buscar:
+            cliente_encontrado = cliente
+            break
+    
+    if cliente_encontrado:
+        # Si el cliente es encontrado, mostrar los datos
+        print("Cliente encontrado:")
+        print(cliente_encontrado)
+    else:
+        print(f"Cliente con correo {correo_buscar} no encontrado.")
+
 def main():
 
     productos = []
@@ -197,6 +339,8 @@ def main():
     info_equipos.write(contenido_productos)
     info_equipos.close()
     clientes = []
+    clientes = []
+    clientes_objeto =[]
 
     # utf-8 para que se muestren los nombres con los acentos bien 
     with open('productos.json', 'r', encoding='utf-8') as archivo_productos:
@@ -308,24 +452,48 @@ def main():
         elif gestion == "2":
             print (2)
         elif gestion == "3":
-            nombre_apellido = input ("Ingrese el Nombre y Apellido o Razón Social")
-            cedula = input ("Ingrese el numero de cedula")
-            correo = input ("Ingrese su correo electronico")
-            direccion = input ("Ingrese su dirección de envio")
-            telefono = input ("Ingrese su telefono")
-            es_juridico = input ("Es cliente jurídico: (1)-Si (2)-No")
-            if es_juridico == "Si":
-                print("Es persona jurídica")
-                nombre_contacto = input("Ingrese el nombre de la persona de contacto")
-                telefono_contacto = input("Ingrese el telefono de la persona de contacto")
-                correo_contacto = input("Ingrese el correo de la persona de contacto")
-                cliente_juridico = ClienteJuridico(nombre_apellido,cedula,correo,direccion,telefono,nombre_contacto,telefono_contacto,correo_contacto)
-                clientes.append(cliente_juridico)
-                print (cliente_juridico.mostrarCliente())
-            else: 
-                cliente = Cliente(nombre_apellido,cedula,correo,direccion,telefono)
-                clientes.append(cliente)
-                print (cliente.mostrarCliente())
+            opt = input("""Ingrese la opcion
+            [1] » Registrar cliente
+            [2] » Modificar cliente
+            [3] » Eliminar cliente       
+            [4] » Busqueda clientes              
+            [5] » Salir
+            """)
+            if opt =="1":
+                nombre_apellido = input ("Ingrese el Nombre y Apellido o Razón Social")
+                cedula = input ("Ingrese el numero de cedula")
+                correo = input ("Ingrese su correo electronico")
+                direccion = input ("Ingrese su dirección de envio")
+                telefono = input ("Ingrese su telefono")
+                es_juridico = input ("Es cliente jurídico: (1)-Si (2)-No")
+                if es_juridico == "Si":
+                    print("Es persona jurídica")
+                    nombre_contacto = input("Ingrese el nombre de la persona de contacto")
+                    telefono_contacto = input("Ingrese el telefono de la persona de contacto")
+                    correo_contacto = input("Ingrese el correo de la persona de contacto")
+                    cliente_juridico = ClienteJuridico(nombre_apellido,cedula,correo,direccion,telefono,nombre_contacto,telefono_contacto,correo_contacto)
+                    clientes.append(cliente_juridico)
+                    print (cliente_juridico.mostrarCliente())
+                    agregar_cliente_json(cliente_juridico)
+                else: 
+                    cliente = Cliente(nombre_apellido,cedula,correo,direccion,telefono)
+                    clientes.append(cliente)
+                    print (cliente.mostrarCliente())
+                    agregar_cliente_json(cliente)
+            elif opt == "2":
+               cedula_buscar = input("Ingrese el número de cédula del cliente a modificar: ")
+               modificar_cliente_json(cedula_buscar)
+            elif opt == "3":
+                cedula_a_eliminar = input("Ingrese la cédula del cliente a eliminar: ")
+                eliminar_cliente_json(cedula_a_eliminar)
+            elif opt =="4":
+                busq = input ("Ingrese el tipo de busqueda (1)-Rif o Cedula (2)-Correo")
+                if busq =="1":
+                    cedula_a_buscar = input("Ingrese la cédula o RIF del cliente a buscar: ")
+                    buscar_cliente_por_cedula(cedula_a_buscar)  
+                elif busq =="2":
+                    correo_a_buscar = input("Ingrese el correo electrónico del cliente a buscar: ")
+                    buscar_cliente_por_correo(correo_a_buscar)
         elif gestion == "4":
             print (2)
         elif gestion == "5":

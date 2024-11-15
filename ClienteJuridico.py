@@ -9,7 +9,7 @@ class ClienteJuridico(Cliente):
 
     def mostrarCliente(self):
         infobasic = super().mostrarCliente() 
-        info_contacto = (f"\nNombre de Contacto: {self.contacto_nombre}\n"
-                         f"Teléfono de Contacto: {self.contacto_telefono}\n"
-                         f"Correo de Contacto: {self.contacto_correo}")
+        info_contacto = (f"\nNombre de Contacto: {self.nombre_contacto}\n"
+                         f"Teléfono de Contacto: {self.telefono_contacto}\n"
+                         f"Correo de Contacto: {self.correo_contacto}")
         return infobasic + info_contacto  
