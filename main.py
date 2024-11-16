@@ -7,6 +7,8 @@ from ClienteJuridico import ClienteJuridico
 from Venta import Venta
 #revisar si se agrega el producto bien con su id
 
+from datetime import datetime
+
 def crearProducto (id_producto,name,description,price,category,inventory,compatible_vehicles,productos_objeto,productos):
     nuevo_producto = Producto(id_producto,name,description,price,category,inventory,compatible_vehicles)
     productos_objeto.append(nuevo_producto)
@@ -122,6 +124,15 @@ def buscarProductosPorDisponibilidad(productos_objeto):
                 print(producto.mostrar_producto())
     except ValueError:
         print("Por favor, ingrese un valor numérico válido para la cantidad mínima.")
+
+def obtener_fecha_venta():
+    # Obtener la fecha y hora actual
+    fecha_actual = datetime.now()
+    
+    # Formatear la fecha y hora en un formato legible (por ejemplo: "2024-11-15 14:30:45")
+    fecha_formateada = fecha_actual.strftime("%Y-%m-%d %H:%M:%S")
+    
+    return fecha_formateada
 
 def modificarProducto(id_producto, productos_objeto, productos):
     '''
@@ -375,6 +386,47 @@ def buscar_cliente_por_correo(correo_buscar):
     else:
         print(f"Cliente con correo {correo_buscar} no encontrado.")
 
+def buscarVentasPorCliente(ventas):
+    '''
+    Función que permite buscar ventas por la cédula o RIF del cliente.
+    Solicita al usuario que ingrese la cédula o RIF y muestra las ventas relacionadas con ese cliente.
+    '''
+    try:
+        cliente_a_buscar = input("Ingrese la cédula o RIF del cliente a buscar: ")
+
+        ventas_encontradas = [venta for venta in ventas if venta.num_cedula == cliente_a_buscar]
+
+        if ventas_encontradas:
+            print(f"\nVentas encontradas para el cliente con cédula {cliente_a_buscar}:")
+            for venta in ventas_encontradas:
+                print(f"Fecha: {venta.fecha_venta}, Total: {venta.total}")
+        else:
+            print("No se encontraron ventas para este cliente.")
+    except ValueError:
+        print("Por favor, ingrese una cédula o RIF válido.")
+
+def buscarVentasPorFecha(ventas):
+    '''
+    Función que permite buscar ventas dentro de un rango de fechas.
+    Solicita al usuario que ingrese un rango de fechas y muestra las ventas dentro de ese rango.
+    '''
+    try:
+        fecha_inicio = input("Ingrese la fecha de inicio (formato YYYY-MM-DD): ")
+        fecha_fin = input("Ingrese la fecha de fin (formato YYYY-MM-DD): ")
+
+        ventas_encontradas = [
+            venta for venta in ventas if fecha_inicio <= venta.fecha_venta[:10] <= fecha_fin
+        ]
+
+        if ventas_encontradas:
+            print(f"\nVentas encontradas entre las fechas {fecha_inicio} y {fecha_fin}:")
+            for venta in ventas_encontradas:
+                print(f"Cliente: {venta.ced}, Fecha: {venta.fecha_venta}, Total: {venta.total}")
+        else:
+            print("No se encontraron ventas en ese rango de fechas.")
+    except ValueError:
+        print("Por favor, ingrese fechas válidas en el formato solicitado.")
+
 def main():
 
     productos = []
@@ -584,8 +636,10 @@ def main():
                     print("\nNo se registraron productos comprados.")
                 
                 metodo_envio = input ("Ingrese metodo de envio Zoom o Delivery por moto")
+                fecha_venta = obtener_fecha_venta()
+                print (fecha_venta)
                 
-                venta = Venta(num_cedula,productos_comprados, metodo_pago, metodo_envio, total_con_descuentos_iva_igtf)
+                venta = Venta(num_cedula,productos_comprados, metodo_pago, metodo_envio, total_con_descuentos_iva_igtf, fecha_venta)
                 ventas.append(venta)
                     
             elif mod2 == "2":
@@ -667,7 +721,13 @@ def main():
                 else:
                     print("No se ha registrado ninguna venta para generar la factura.")
             elif mod2 == "3":
-                print ("3")
+                opcion_busqueda = input("¿Desea buscar ventas por cliente o por fecha? (cliente/fecha): ").lower()
+                if opcion_busqueda == 'cliente':
+                    buscarVentasPorCliente(ventas)
+                elif opcion_busqueda == 'fecha':
+                    buscarVentasPorFecha(ventas)
+                else:
+                    print("Opción no válida. Por favor, elija 'cliente' o 'fecha'.")
             else: 
                 break
         elif gestion == "3":
