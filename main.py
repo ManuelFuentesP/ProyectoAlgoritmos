@@ -6,6 +6,8 @@ from Cliente import Cliente
 from ClienteJuridico import ClienteJuridico
 from Venta import Venta
 from Pago import Pago
+from Envios import Envios
+from collections import Counter
 #revisar si se agrega el producto bien con su id
 
 from datetime import datetime
@@ -435,10 +437,146 @@ def buscar_cliente_venta(cedula_buscar, ventas):
         if venta.ced.strip() == cedula_buscar.strip():
             print("Cliente encontrado en la venta:")
             venta.mostrarVenta()  # Mostrar detalles de la venta
-            return True  # Cliente encontrado, devolver True
+            return venta  # Devuelve el objeto Venta
 
     print(f"Cliente con cédula/RIF {cedula_buscar} no encontrado en las ventas registradas.")
-    return False  # Cliente no encontrado, devolver False
+    return None  # Cliente no encontrado, devuelve None
+
+def buscarPagosPorFiltros(pagos):
+    print("\nBuscar pagos por filtros:")
+    
+    # Elegir el filtro
+    print("1. Cliente")
+    print("2. Fecha")
+    print("3. Tipo de pago")
+    print("4. Moneda de pago")
+    opcion = input("Seleccione el filtro de búsqueda: ")
+
+    pagos_encontrados = []
+
+    try:
+        # Filtrar según la opción seleccionada
+        if opcion == "1":
+            cliente = input("Ingrese la cédula o RIF del cliente: ").strip()
+            pagos_encontrados = [pago for pago in pagos if isinstance(pago, tuple) and len(pago) == 4 and pago[0] == cliente]
+
+        elif opcion == "2":
+            fecha_inicio = input("Ingrese la fecha de inicio (YYYY-MM-DD): ")
+            fecha_fin = input("Ingrese la fecha de fin (YYYY-MM-DD): ")
+            pagos_encontrados = [
+                pago for pago in pagos if isinstance(pago, tuple) and len(pago) == 4 and fecha_inicio <= pago[3] <= fecha_fin
+            ]
+
+        elif opcion == "3":
+            tipo_pago = input("Ingrese el tipo de pago (ejemplo: efectivo, tarjeta): ").strip().lower()
+            pagos_encontrados = [
+                pago for pago in pagos if isinstance(pago, tuple) and len(pago) == 4 and pago[1].lower() == tipo_pago
+            ]
+
+        elif opcion == "4":
+            moneda = input("Ingrese la moneda de pago (ejemplo: dolares, bolivares): ").strip().lower()
+            pagos_encontrados = [
+                pago for pago in pagos if isinstance(pago, tuple) and len(pago) == 4 and pago[2].lower() == moneda
+            ]
+
+        else:
+            print("Opción no válida.")
+            return
+
+        # Mostrar resultados
+        if pagos_encontrados:
+            print("\nPagos encontrados:")
+            for pago in pagos_encontrados:
+                try:
+                    print(f"Cliente: {pago[0]}, Tipo de Pago: {pago[1]}, Moneda: {pago[2]}, Fecha: {pago[3]}")
+                except IndexError:
+                    print(f"Error al mostrar pago: {pago}")
+        else:
+            print("No se encontraron pagos con el filtro seleccionado.")
+
+    except Exception as e:
+        print(f"Ocurrió un error inesperado: {e}")
+
+def codigoAleatorio(item):
+    """
+    Genera un identificador aleatorio en formato hexadecimal basado en el ID del objeto.
+
+    Parameters:
+    item (object): Objeto del cual se generará el identificador.
+
+    Returns:
+    str: Identificador aleatorio en formato hexadecimal.
+    """
+    identificador = format(id(item), 'x')
+    return identificador
+
+def buscarEnvioPorCliente(envios):
+    '''
+    Función que permite buscar ventas por la cédula o RIF del cliente.
+    Solicita al usuario que ingrese la cédula o RIF y muestra las ventas relacionadas con ese cliente.
+    '''
+    try:
+        cliente_a_buscar = input("Ingrese la cédula o RIF del cliente a buscar: ")
+
+        envios_encontrados = [envio for envio in envios if envios.num_cedula == cliente_a_buscar]
+
+        if envios_encontrados:
+            print(f"\nVentas encontradas para el cliente con cédula {cliente_a_buscar}:")
+            for envio in envios_encontrados:
+                print(f"Fecha: {envios.metodo_envio}, Total: {envios.metodo_envio}")
+        else:
+            print("No se encontraron ventas para este cliente.")
+    except ValueError:
+        print("Por favor, ingrese una cédula o RIF válido.")
+
+def buscarEnvioPorFecha(envios):
+    '''
+    Función que permite buscar ventas dentro de un rango de fechas.
+    Solicita al usuario que ingrese un rango de fechas y muestra las ventas dentro de ese rango.
+    '''
+    try:
+        fecha_inicio = input("Ingrese la fecha de inicio (formato YYYY-MM-DD): ")
+        fecha_fin = input("Ingrese la fecha de fin (formato YYYY-MM-DD): ")
+
+        envios_encontrados = [
+            envio for envio in envios if fecha_inicio <= envio.fecha_envio[:10] <= fecha_fin
+        ]
+
+        if envios_encontrados:
+            print(f"\nVentas encontradas entre las fechas {fecha_inicio} y {fecha_fin}:")
+            for envio in envios_encontrados:
+                print(f"Cliente: {envio.orden_compra}, Fecha: {envio.metodo_envio}")
+        else:
+            print("No se encontraron ventas en ese rango de fechas.")
+    except ValueError:
+        print("Por favor, ingrese fechas válidas en el formato solicitado.")
+
+def generar_informe_ventas(ventas):
+    fecha_hoy = datetime.today()
+
+    # Filtrar ventas por rango de fechas
+    ventas_dia = [venta for venta in ventas if venta.fecha_venta[:10] == fecha_hoy.strftime('%Y-%m-%d')]
+    ventas_semana = [venta for venta in ventas if (fecha_hoy - datetime.strptime(venta.fecha_venta[:10], '%Y-%m-%d')).days < 7]
+    ventas_mes = [venta for venta in ventas if (fecha_hoy.month == datetime.strptime(venta.fecha_venta[:10], '%Y-%m-%d').month) and (fecha_hoy.year == datetime.strptime(venta.fecha_venta[:10], '%Y-%m-%d').year)]
+    ventas_anio = [venta for venta in ventas if fecha_hoy.year == datetime.strptime(venta.fecha_venta[:10], '%Y-%m-%d').year]
+
+    # Mostrar ventas totales
+    print(f"Ventas Totales:")
+    print(f"Hoy: {len(ventas_dia)} ventas")
+    print(f"Semana: {len(ventas_semana)} ventas")
+    print(f"Mes: {len(ventas_mes)} ventas")
+    print(f"Año: {len(ventas_anio)} ventas")
+
+def productos_mas_vendidos(ventas):
+    productos = []
+    for venta in ventas:
+        productos.extend(venta.productos)  # Suponiendo que 'productos' es una lista de productos de cada venta
+
+    productos_mas_comunes = Counter(productos)
+    
+    print("Productos más vendidos:")
+    for producto, cantidad in productos_mas_comunes.most_common(5):  # Mostrar los 5 más vendidos
+        print(f"{producto}: {cantidad}")
 
 def main():
 
@@ -453,7 +591,8 @@ def main():
     clientes_objeto =[]
     productos_comprados =[]
     ventas = []
-
+    pagos = []
+    envios = []
     # utf-8 para que se muestren los nombres con los acentos bien 
     with open('productos.json', 'r', encoding='utf-8') as archivo_productos:
         datos_productos = json.load(archivo_productos)
@@ -787,32 +926,84 @@ def main():
                     correo_a_buscar = input("Ingrese el correo electrónico del cliente a buscar: ")
                     buscar_cliente_por_correo(correo_a_buscar)
         elif gestion == "4":
-            print("Gestión de pago")
-            cliente_pago = input("Ingrese la cédula o RIF del cliente a buscar: ")
+            mod4 = input("Ingrese la opcion que desea realizar (1)-Procesar Pago (2)-Busqueda Pagos (3)-salir")
+            if mod4 == "1":
+                print("Gestión de pago")
+                cliente_pago = input("Ingrese la cédula o RIF del cliente a buscar: ")
 
-            # Buscar venta asociada al cliente
-            venta_encontrada = buscar_cliente_venta(cliente_pago, ventas)
-            if venta_encontrada:
-                # Extraer datos de la venta
-                num_cedula = venta_encontrada.ced
-                tipo_pago = venta_encontrada.metodo_pago
+                # Buscar venta asociada al cliente
+                venta_encontrada = buscar_cliente_venta(cliente_pago, ventas)
+                if venta_encontrada:  # Si se encontró la venta
+                    # Extraer datos de la venta
+                    num_cedula = venta_encontrada.ced
+                    tipo_pago = venta_encontrada.metodo_pago
 
-                # Mostrar detalles extraídos
-                print(f"\nDatos extraídos para el pago:")
-                print(f"- Cédula/RIF del cliente: {num_cedula}")
-                print(f"- Tipo de pago: {tipo_pago}")
-                moneda_pago = ("Ingrese la moneda de pago (dolares/bolivares)")
-                print(f"- Tipo de pago: {tipo_pago}")
-                fecha_pago = obtener_fecha_venta()
+                    # Mostrar detalles extraídos
+                    print(f"\nDatos extraídos para el pago:")
+                    print(f"- Cédula/RIF del cliente: {num_cedula}")
+                    print(f"- Tipo de pago: {tipo_pago}")
 
-                pago_nuevo = Pago(num_cedula, tipo_pago, moneda_pago, fecha_pago)
-            else:
-                print("No se realizó ninguna operación porque el cliente no fue encontrado.")
-            
-           
+                    # Solicitar detalles adicionales
+                    moneda_pago = input("Ingrese la moneda de pago (dolares/bolivares): ")
+                    fecha_pago = obtener_fecha_venta()
 
+                    # Registrar el nuevo pago
+                    pago_nuevo = Pago(num_cedula, tipo_pago, moneda_pago, fecha_pago)
+                    print(f"Pago nuevo registrado: {num_cedula}, {tipo_pago}, {moneda_pago}")
+                    pagos.append(pago_nuevo.MostrarPago())
+                else:
+                    print("No se realizó ninguna operación porque la venta no fue encontrada.")
+            elif mod4 == "2":
+                print ("Ver pagos")
+                buscarPagosPorFiltros(pagos)
+            elif mod4 == "3":
+                break
         elif gestion == "5":
-            print (5)
+            mod5 = input("Ingrese la opcion que desea realizar (1)-Procesar Envio (2)-Busqueda Envio (3)-salir")
+            if mod5 == "1":
+                print("Gestión de envio")
+                cliente_pago = input("Ingrese la cédula o RIF del cliente a buscar: ")
+
+                # Buscar venta asociada al cliente
+                venta_encontrada = buscar_cliente_venta(cliente_pago, ventas)
+                if venta_encontrada:  # Si se encontró la venta
+                # Extraer datos de la venta
+                    
+                    num_cedula = venta_encontrada.ced
+                    orden_compra= codigoAleatorio(num_cedula)
+                    metodo_envio = venta_encontrada.metodo_envio
+
+                        # Mostrar detalles extraídos
+                    print(f"\nDatos extraídos para el metodo de envio:")
+                    print(f"- Cédula/RIF del cliente: {num_cedula}")
+                    print(f"- Tipo de envio: {metodo_envio}")
+                    fecha_envio = obtener_fecha_venta()
+                    if metodo_envio == "Delivery":
+                        print("Datos Motorizado")
+                        nombre_motorizado = input("Ingrese el nombre del motorizado")
+                        telefono_motorizado = input ("Ingrese el telefono del motorizado")
+                        datos_motorizado = nombre_motorizado + telefono_motorizado
+                    else: 
+                        datos_motorizado = False
+
+                    envio_nuevo = Envios(num_cedula, orden_compra, metodo_envio, datos_motorizado, fecha_envio)
+                    print(f"Pago nuevo registrado: {num_cedula}, {orden_compra}, {metodo_envio}, {datos_motorizado}")
+                    envios.append(envio_nuevo.mostrarEnvio())
+                else:
+                    print("No se realizó ninguna operación porque el envio no fue encontrado.")
+            elif mod5 == "2":
+                print ("Busquedas")
+                opcion_busqueda = input("¿Desea buscar envio por cliente o por fecha? (cliente/fecha): ").lower()
+                if opcion_busqueda == 'cliente':
+                    buscarEnvioPorCliente(envios)
+                elif opcion_busqueda == 'fecha':
+                    buscarEnvioPorFecha(envios)
+                else:
+                    print("Opción no válida. Por favor, elija 'cliente' o 'fecha'.")
+            else:
+                break
+        elif gestion == "6":
+            print ("Estadisticas")
         else:
             break
 main()
