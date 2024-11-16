@@ -8,4 +8,4 @@ class Venta():
         self.fecha_venta = fecha_venta
     
     def mostrarVenta(self):
-        return self.total
+        return self.total, self.metodo_pago, self.metodo_envio

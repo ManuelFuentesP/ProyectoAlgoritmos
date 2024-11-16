@@ -5,6 +5,7 @@ import json
 from Cliente import Cliente
 from ClienteJuridico import ClienteJuridico
 from Venta import Venta
+from Pago import Pago
 #revisar si se agrega el producto bien con su id
 
 from datetime import datetime
@@ -427,6 +428,18 @@ def buscarVentasPorFecha(ventas):
     except ValueError:
         print("Por favor, ingrese fechas válidas en el formato solicitado.")
 
+# Función para buscar cliente por cédula en las ventas registradas
+def buscar_cliente_venta(cedula_buscar, ventas):
+    # Buscar el cliente en la lista de ventas registradas
+    for venta in ventas:
+        if venta.ced.strip() == cedula_buscar.strip():
+            print("Cliente encontrado en la venta:")
+            venta.mostrarVenta()  # Mostrar detalles de la venta
+            return True  # Cliente encontrado, devolver True
+
+    print(f"Cliente con cédula/RIF {cedula_buscar} no encontrado en las ventas registradas.")
+    return False  # Cliente no encontrado, devolver False
+
 def main():
 
     productos = []
@@ -774,14 +787,30 @@ def main():
                     correo_a_buscar = input("Ingrese el correo electrónico del cliente a buscar: ")
                     buscar_cliente_por_correo(correo_a_buscar)
         elif gestion == "4":
-            print ("Gestion de pago")
+            print("Gestión de pago")
             cliente_pago = input("Ingrese la cédula o RIF del cliente a buscar: ")
-            if buscar_cliente_por_cedula(cliente_pago):
-                num_cedula = cliente_pago
-                print(f"Número de cédula {num_cedula} guardado.")
+
+            # Buscar venta asociada al cliente
+            venta_encontrada = buscar_cliente_venta(cliente_pago, ventas)
+            if venta_encontrada:
+                # Extraer datos de la venta
+                num_cedula = venta_encontrada.ced
+                tipo_pago = venta_encontrada.metodo_pago
+
+                # Mostrar detalles extraídos
+                print(f"\nDatos extraídos para el pago:")
+                print(f"- Cédula/RIF del cliente: {num_cedula}")
+                print(f"- Tipo de pago: {tipo_pago}")
+                moneda_pago = ("Ingrese la moneda de pago (dolares/bolivares)")
+                print(f"- Tipo de pago: {tipo_pago}")
+                fecha_pago = obtener_fecha_venta()
+
+                pago_nuevo = Pago(num_cedula, tipo_pago, moneda_pago, fecha_pago)
             else:
-                print("El número de cédula no será guardado porque el cliente no fue encontrado.")
-                
+                print("No se realizó ninguna operación porque el cliente no fue encontrado.")
+            
+           
+
         elif gestion == "5":
             print (5)
         else:
