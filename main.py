@@ -529,6 +529,15 @@ def buscarEnvioPorCliente(envios):
     except ValueError:
         print("Por favor, ingrese una cédula o RIF válido.")
 
+def clientes_con_pagos_pendientes(pagos):
+    clientes_pendientes = [pago.cliente for pago in pagos if not pago.pagado]
+
+    clientes_pendientes_frecuentes = Counter(clientes_pendientes)
+
+    print("Clientes con pagos pendientes:")
+    for cliente, cantidad in clientes_pendientes_frecuentes.items():
+        print(f"Cliente {cliente} tiene {cantidad} pagos pendientes.")
+
 def buscarEnvioPorFecha(envios):
     '''
     Función que permite buscar ventas dentro de un rango de fechas.
@@ -577,6 +586,67 @@ def productos_mas_vendidos(ventas):
     print("Productos más vendidos:")
     for producto, cantidad in productos_mas_comunes.most_common(5):  # Mostrar los 5 más vendidos
         print(f"{producto}: {cantidad}")
+
+def clientes_mas_frecuentes(ventas):
+    clientes = [venta.ced for venta in ventas]  # Suponiendo que 'ced' es la cédula o identificador del cliente
+    clientes_frecuentes = Counter(clientes)
+
+    print("Clientes más frecuentes:")
+    for cliente, cantidad in clientes_frecuentes.most_common(5):  # Mostrar los 5 más frecuentes
+        print(f"Cliente {cliente}: {cantidad} compras")
+
+def generar_informe_pagos(pagos):
+    fecha_hoy = datetime.today()
+
+    # Filtrar pagos por rango de fechas
+    pagos_dia = [pago for pago in pagos if pago.fecha_pago[:10] == fecha_hoy.strftime('%Y-%m-%d')]
+    pagos_semana = [pago for pago in pagos if (fecha_hoy - datetime.strptime(pago.fecha_pago[:10], '%Y-%m-%d')).days < 7]
+    pagos_mes = [pago for pago in pagos if (fecha_hoy.month == datetime.strptime(pago.fecha_pago[:10], '%Y-%m-%d').month) and (fecha_hoy.year == datetime.strptime(pago.fecha_pago[:10], '%Y-%m-%d').year)]
+    pagos_anio = [pago for pago in pagos if fecha_hoy.year == datetime.strptime(pago.fecha_pago[:10], '%Y-%m-%d').year]
+
+    # Mostrar pagos totales
+    print(f"Pagos Totales:")
+    print(f"Hoy: {len(pagos_dia)} pagos")
+    print(f"Semana: {len(pagos_semana)} pagos")
+    print(f"Mes: {len(pagos_mes)} pagos")
+    print(f"Año: {len(pagos_anio)} pagos")
+
+
+def generar_informe_envios(envios):
+    fecha_hoy = datetime.today()
+
+    # Filtrar envíos por rango de fechas
+    envios_dia = [envio for envio in envios if envio.fecha_envio[:10] == fecha_hoy.strftime('%Y-%m-%d')]
+    envios_semana = [envio for envio in envios if (fecha_hoy - datetime.strptime(envio.fecha_envio[:10], '%Y-%m-%d')).days < 7]
+    envios_mes = [envio for envio in envios if (fecha_hoy.month == datetime.strptime(envio.fecha_envio[:10], '%Y-%m-%d').month) and (fecha_hoy.year == datetime.strptime(envio.fecha_envio[:10], '%Y-%m-%d').year)]
+    envios_anio = [envio for envio in envios if fecha_hoy.year == datetime.strptime(envio.fecha_envio[:10], '%Y-%m-%d').year]
+
+    # Mostrar envíos totales
+    print(f"Envíos Totales:")
+    print(f"Hoy: {len(envios_dia)} envíos")
+    print(f"Semana: {len(envios_semana)} envíos")
+    print(f"Mes: {len(envios_mes)} envíos")
+    print(f"Año: {len(envios_anio)} envíos")
+
+def productos_mas_enviados(envios):
+    productos = []
+    for envio in envios:
+        productos.extend(envio.productos)  # Suponiendo que 'productos' es una lista de productos de cada envío
+
+    productos_mas_comunes = Counter(productos)
+    
+    print("Productos más enviados:")
+    for producto, cantidad in productos_mas_comunes.most_common(5):  # Mostrar los 5 más enviados
+        print(f"{producto}: {cantidad}")
+
+def clientes_con_envios_pendientes(envios):
+    clientes_pendientes = [envio.cliente for envio in envios if not envio.entregado]  # Suponiendo que 'entregado' es un campo booleano
+
+    clientes_pendientes_frecuentes = Counter(clientes_pendientes)
+
+    print("Clientes con envíos pendientes:")
+    for cliente, cantidad in clientes_pendientes_frecuentes.items():
+        print(f"Cliente {cliente} tiene {cantidad} envíos pendientes.")
 
 def main():
 
@@ -1004,6 +1074,32 @@ def main():
                 break
         elif gestion == "6":
             print ("Estadisticas")
+            print("\nMenú de Informes:")
+            print("1. Informe de Ventas")
+            print("2. Informe de Pagos")
+            print("3. Informe de Envíos")
+            print("4. Salir")
+            opcion = input("Seleccione una opción: ")
+
+            if opcion == '1':
+                print("\nInforme de Ventas:")
+                generar_informe_ventas(ventas)
+                productos_mas_vendidos(ventas)
+                clientes_mas_frecuentes(ventas)
+            elif opcion == '2':
+                print("\nInforme de Pagos:")
+                generar_informe_pagos(pagos)
+                clientes_con_pagos_pendientes(pagos)
+            elif opcion == '3':
+                print("\nInforme de Envíos:")
+                generar_informe_envios(envios)
+                productos_mas_enviados(envios)
+                clientes_con_envios_pendientes(envios)
+            elif opcion == '4':
+                print("Saliendo del menú...")
+                break
+            else:
+                print("Opción no válida, intente de nuevo.")
         else:
             break
 main()
