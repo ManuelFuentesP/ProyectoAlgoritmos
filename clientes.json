@@ -6,5 +6,21 @@
         "direccion": "dadas",
         "telefono": "1111",
         "tipo": "Natural"
+    },
+    {
+        "nombre_apellido": "Manuel GG",
+        "cedula": "1111",
+        "correo": "manu@gmail.com",
+        "direccion": "dada",
+        "telefono": "0414255555555",
+        "tipo": "Natural"
+    },
+    {
+        "nombre_apellido": "2222",
+        "cedula": "2555555",
+        "correo": "mmm@gmail.com",
+        "direccion": "jsjjss",
+        "telefono": "54",
+        "tipo": "Natural"
     }
 ]

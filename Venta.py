@@ -9,4 +9,4 @@ class Venta():
         self.pago = pago
     
     def mostrarVenta(self):
-        return self.total, self.metodo_pago, self.metodo_envio, self.pago
+        return self.ced, self.productos_comprados, self.total, self.metodo_pago, self.metodo_envio, self.pago

@@ -315,6 +315,118 @@ def agregar_cliente_json(cliente):
     with open("clientes.json", "w") as file:
         json.dump(clientes_data, file, indent=4)
 
+def agregar_venta_json(venta):
+    # Convertir productos a un formato serializable
+    productos_serializables = []
+    for producto in venta.productos_comprados:
+        productos_serializables.append({
+            "nombre": producto["producto"].name,
+            "precio": getattr(producto["producto"], "price", 0),
+            "cantidad": producto["cantidad"],
+        })
+
+    # Crear el diccionario serializable
+    venta_data = {
+        "Cedula": venta.ced,
+        "Productos Comprados": productos_serializables,
+        "Metodo Pago": venta.metodo_pago,
+        "Metodo Envio": venta.metodo_envio,
+        "Total": venta.total,
+        "Fecha Venta": venta.fecha_venta,
+        "Pago": venta.pago,
+    }
+
+    # Leer o inicializar el archivo JSON
+    try:
+        with open("ventas.json", "r") as file:
+            ventas_data = json.load(file)
+    except (FileNotFoundError, json.JSONDecodeError):
+        ventas_data = []
+
+    # Agregar la nueva venta
+    ventas_data.append(venta_data)
+
+    # Guardar los datos en el archivo JSON
+    with open("ventas.json", "w") as file:
+        json.dump(ventas_data, file, indent=4)
+
+def agregar_pagos_json(pagos):
+    # Convertir el objeto cliente en un diccionario
+    pago_data = {
+        "Cedula": pagos.num_cedula,
+        "Tipo Pago": pagos.tipo_pago,
+        "Moneda Pago": pagos.moneda_pago,
+        "Fecha Pago": pagos.fecha_pago,
+    }
+    
+    # Leer el contenido existente en el archivo JSON (si existe)
+    try:
+        with open("pagos.json", "r") as file:
+            pagos_data = json.load(file)
+    except (FileNotFoundError, json.JSONDecodeError):
+        pagos_data = []
+
+    # Agregar el nuevo cliente a la lista de datos
+    pagos_data.append(pago_data)
+
+    # Guardar todos los datos de clientes en el archivo JSON
+    with open("pagos.json", "w") as file:
+        json.dump(pagos_data, file, indent=4)
+
+def agregar_envios_json(envios):
+    # Convertir el objeto cliente en un diccionario
+    envio_data = {
+        "Cedula": envios.num_cedula,
+        "Tipo Pago": envios.orden_compra,
+        "Moneda Pago": envios.metodo_envio,
+        "Fecha Pago": envios.datos_motorizado,
+        "Fecha Envio": envios.fecha_envio
+    }
+    
+    # Leer el contenido existente en el archivo JSON (si existe)
+    try:
+        with open("envios.json", "r") as file:
+            envios_data = json.load(file)
+    except (FileNotFoundError, json.JSONDecodeError):
+        envios_data = []
+
+    # Agregar el nuevo cliente a la lista de datos
+    envios_data.append(envio_data)
+
+    # Guardar todos los datos de clientes en el archivo JSON
+    with open("envios.json", "w") as file:
+        json.dump(envios_data, file, indent=4)
+
+def actualizar_pago_json(cedula_cliente):
+    # Leer el archivo JSON
+    try:
+        with open("ventas.json", "r") as file:
+            ventas_data = json.load(file)
+    except FileNotFoundError:
+        print("El archivo de ventas no existe.")
+        return
+    except json.JSONDecodeError:
+        print("El archivo de ventas tiene un formato incorrecto.")
+        return
+
+    # Buscar y actualizar la venta asociada a la cédula
+    venta_actualizada = False
+    for venta in ventas_data:
+        if venta["Cedula"] == cedula_cliente:
+            venta["Pago"] = True  # Actualizar el estado de pago
+            venta_actualizada = True
+            break
+
+    if not venta_actualizada:
+        print("No se encontró ninguna venta asociada a esa cédula.")
+        return
+
+    # Guardar los cambios en el archivo JSON
+    with open("ventas.json", "w") as file:
+        json.dump(ventas_data, file, indent=4)
+
+    print(f"El estado de pago para la cédula {cedula_cliente} se actualizó correctamente.")
+
 def cargar_clientes_json():
     try:
         with open("clientes.json", "r") as file:
@@ -705,7 +817,7 @@ def main():
             category = datos_productos[i]["category"]
             inventory = datos_productos[i]["inventory"]
             compatible_vehicles = datos_productos[i]["compatible_vehicles"]
-            print(f"ID: {id_producto}, Nombre: {name}")
+            #print(f"ID: {id_producto}, Nombre: {name}")
             # Asegúrate de que la función crearProducto esté definida y de que los parámetros sean correctos
             crearProducto(id_producto, name, description, price, category, inventory, compatible_vehicles, productos_objeto, productos)  
 
@@ -896,6 +1008,7 @@ def main():
 
                 venta = Venta(num_cedula, productos_comprados, metodo_pago, metodo_envio, total_con_descuentos_iva_igtf, fecha_venta, pago)
                 ventas.append(venta)
+                agregar_venta_json(venta)
                     
             elif mod2 == "2":
                 print("\nGenerando factura...")
@@ -1070,9 +1183,11 @@ def main():
                     pago_nuevo = Pago(num_cedula, tipo_pago, moneda_pago, fecha_pago)
                     print(f"Pago nuevo registrado: {num_cedula}, {tipo_pago}, {moneda_pago}")
                     pagos.append(pago_nuevo.MostrarPago())
+                    agregar_pagos_json(pago_nuevo)
 
                     # Actualizar el estado de la venta a pagada (pago=True)
                     venta_encontrada.pago = True
+                    actualizar_pago_json(num_cedula)
                     print(f"Estado de la venta actualizada a: Pago procesado.")
 
                 else:
@@ -1113,6 +1228,7 @@ def main():
                     envio_nuevo = Envios(num_cedula, orden_compra, metodo_envio, datos_motorizado, fecha_envio)
                     print(f"Pago nuevo registrado: {num_cedula}, {orden_compra}, {metodo_envio}, {datos_motorizado}")
                     envios.append(envio_nuevo.mostrarEnvio())
+                    agregar_envios_json(envio_nuevo)
                 else:
                     print("No se realizó ninguna operación porque el envio no fue encontrado.")
             elif mod5 == "2":

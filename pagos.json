@@ -1,0 +1,21 @@
+[
+    {
+        "Cedula": "1111",
+        "Tipo Pago": "transferencia",
+        "Moneda Pago": "dolares",
+        "Fecha Pago": "2024-11-17 18:23:39"
+    },
+    {
+        "Cedula": "1111",
+        "Tipo Pago": "20dfc31f7b0",
+        "Moneda Pago": "Zoom",
+        "Fecha Pago": false,
+        "Fecha Envio": "2024-11-17 18:23:54"
+    },
+    {
+        "Cedula": "2555555",
+        "Tipo Pago": "punto de venta",
+        "Moneda Pago": "dolares",
+        "Fecha Pago": "2024-11-17 18:30:17"
+    }
+]
