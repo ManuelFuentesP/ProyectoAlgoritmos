@@ -778,7 +778,8 @@ def productos_mas_vendidos(ventas):
         print(f"{producto}: {cantidad}")
 
 def clientes_mas_frecuentes(ventas):
-    clientes = [venta.ced for venta in ventas]  # Suponiendo que 'ced' es la cédula o identificador del cliente
+    # Suponiendo que 'ced' es la cédula o identificador del cliente
+    clientes = [venta.ced for venta in ventas]  
     clientes_frecuentes = Counter(clientes)
 
     print("Clientes más frecuentes:")
@@ -830,6 +831,7 @@ def productos_mas_enviados(envios):
         print(f"{producto}: {cantidad}")
 
 def clientes_con_envios_pendientes(envios):
+    # Filtrar clientes con envíos pendientes
     clientes_pendientes = [envio.cliente for envio in envios if not envio.entregado]  # Suponiendo que 'entregado' es un campo booleano
 
     clientes_pendientes_frecuentes = Counter(clientes_pendientes)
@@ -964,61 +966,60 @@ def main():
             print ("registrar venta")
             mod2 = input ("Ingrese la opcion que desea realizar (1)-Registrar Venta (2)-Generar Factura (3)-Buscar Ventas (4)-Salir")
             if mod2 == "1":
-                print ("1")
+                print("1")
                 cliente_a_buscar = input("Ingrese la cédula o RIF del cliente a buscar: ")
+
+                # Verificación de cliente
                 if buscar_cliente_por_cedula(cliente_a_buscar):
                     num_cedula = cliente_a_buscar
                     print(f"Número de cédula {num_cedula} guardado.")
                 else:
                     print("El número de cédula no será guardado porque el cliente no fue encontrado.")
-                
+
+                # Proceso de compra
                 productos_comprados = comprarProductosPorNombre(productos_objeto)
                 guardarCambiosProductos(productos_objeto)
 
                 if productos_comprados:
                     print("\nResumen de productos comprados:")
-                    total = 0  # Inicializar el total
-                    subtotal = 0  # Inicializar el subtotal
-                    descuento = 0  # Inicializar el descuento
-                    iva = 0  # Inicializar el IVA
-                    igtf = 0  # Inicializar el IGTF
-
-                    # Lista para guardar los productos con su cantidad
-                    productos_guardados = []
-
-                    # Selección del método de pago por parte del usuario
+                    
+                    # Inicializar variables
+                    total = 0
+                    subtotal = 0
+                    descuento = 0
+                    iva = 0
+                    igtf = 0
+                    
+                    productos_guardados = []  # Para los productos comprados
+                    
+                    # Selección del método de pago
                     metodo_pago = None
                     while metodo_pago not in ['punto de venta', 'pago móvil', 'transferencia', 'zelle', 'paypal', 'efectivo']:
                         metodo_pago = input("Selecciona el método de pago (punto de venta, pago móvil, transferencia, Zelle, PayPal, efectivo): ").lower()
                         if metodo_pago not in ['punto de venta', 'pago móvil', 'transferencia', 'zelle', 'paypal', 'efectivo']:
                             print("Método de pago no válido. Por favor selecciona uno de los métodos válidos.")
 
-                    paga_en_divisas = False  # Cambiar a True si paga en divisas
+                    paga_en_divisas = metodo_pago in ['pago móvil', 'transferencia', 'zelle', 'paypal']  # Pagos en divisas
 
+                    # Procesar los productos comprados
                     for item in productos_comprados:
-                        # Asegúrate de que item tiene las claves correctas
-                        producto = item.get('producto')  # Usar .get para evitar errores si la clave no existe
-                        cantidad = item.get('cantidad')
+                        producto = item.get('producto')  # Obtener el producto
+                        cantidad = item.get('cantidad')  # Obtener la cantidad
 
-                        if producto and cantidad:  # Verificar que ambos datos existan
-                            precio_unitario = getattr(producto, 'price', 0)  # Obtener precio o 0 si no existe
+                        if producto and cantidad:
+                            precio_unitario = getattr(producto, 'price', 0)
                             subtotal_producto = precio_unitario * cantidad
-                            subtotal += subtotal_producto  # Acumular subtotal en el subtotal general
-                            total += subtotal_producto  # Acumular el total general
+                            subtotal += subtotal_producto  # Acumular subtotal
+                            total += subtotal_producto  # Acumular total
                             print(f"Producto: {producto.name}, Cantidad: {cantidad}, Precio Unitario: {precio_unitario}, Subtotal: {subtotal_producto}")
-                            
-                            # Guardar nombre y cantidad en la lista
                             productos_guardados.append({'nombre': producto.name, 'cantidad': cantidad})
 
-                        else:
-                            print("Error: Datos del producto incompletos.")
-
-                    # Determinar si aplica descuento (suponiendo que hay un campo 'tipo_cliente' que indica si es jurídico)
-                    cliente_es_juridico = False  # Asumir que no es jurídico por defecto, cambiarlo si es necesario
-                    pago_contado = (metodo_pago == 'efectivo')  # Si es pago en efectivo, aplicar descuento
+                    # Verificar si es cliente jurídico y si paga en efectivo para aplicar descuento
+                    cliente_es_juridico = False  # Asumir que no es jurídico por defecto
+                    pago_contado = metodo_pago == 'efectivo'  # Si paga en efectivo, aplicar descuento
 
                     if cliente_es_juridico and pago_contado:
-                        descuento = subtotal * 0.05  # 5% de descuento si es jurídico y paga en efectivo
+                        descuento = subtotal * 0.05  # Descuento del 5%
 
                     # Calcular IVA (16%)
                     iva = subtotal * 0.16
@@ -1027,10 +1028,10 @@ def main():
                     if paga_en_divisas:
                         igtf = subtotal * 0.03
 
-                    # Calcular el total final
+                    # Calcular el total final con descuentos, IVA y IGTF
                     total_con_descuentos_iva_igtf = subtotal - descuento + iva + igtf
 
-                    # Mostrar el desglose
+                    # Mostrar desglose
                     print(f"\nSubtotal: {subtotal}")
                     if descuento > 0:
                         print(f"Descuento (5%): -{descuento}")
@@ -1040,7 +1041,7 @@ def main():
                         print(f"IGTF (3%): +{igtf}")
                     print(f"\nTotal a pagar: {total_con_descuentos_iva_igtf}")
 
-                    # Mostrar los productos guardados con su cantidad
+                    # Mostrar los productos comprados
                     print("\nProductos comprados y cantidades:")
                     for producto in productos_guardados:
                         print(f"Producto: {producto['nombre']}, Cantidad: {producto['cantidad']}")
@@ -1048,11 +1049,15 @@ def main():
                 else:
                     print("\nNo se registraron productos comprados.")
 
+                # Método de envío
                 metodo_envio = input("Ingrese metodo de envio Zoom o Delivery por moto: ")
+
+                # Fecha de venta y creación de la venta
                 fecha_venta = obtener_fecha_venta()
                 print(fecha_venta)
-                pago = False
+                pago = False  # Pago aún no realizado
 
+                # Crear y agregar la venta
                 venta = Venta(num_cedula, productos_comprados, metodo_pago, metodo_envio, total_con_descuentos_iva_igtf, fecha_venta, pago)
                 ventas.append(venta)
                 agregar_venta_json(venta)
@@ -1154,33 +1159,44 @@ def main():
             [5] » Salir
             """)
             if opt =="1":
-                nombre_apellido = input ("Ingrese el Nombre y Apellido o Razón Social")
-                cedula = input ("Ingrese el numero de cedula")
-                while True:
+                nombre_apellido = input("Ingrese el Nombre y Apellido o Razón Social: ")
+                # Verificar que no contenga números
+                while any(char.isdigit() for char in nombre_apellido):
+                    print("El nombre no debe contener números. Inténtelo de nuevo.")
+                    nombre_apellido = input("Ingrese el Nombre y Apellido o Razón Social: ")
+                cedula = input("Ingrese el número de cédula: ")
+                # Bucle para verificar si la cédula es válida
+                while not (cedula.isdigit() and 7 <= len(cedula) <= 10):
+                    print("Cédula inválida. Por favor, ingrese un número válido (solo dígitos, entre 7 y 10 caracteres).")
+                    cedula = input("Ingrese el número de cédula: ")
+                correo = input("Ingrese su correo electrónico: ")
+                # Bucle para verificar si el correo es válido
+                while not ("@" in correo and "." in correo.split("@")[-1]):
+                    print("Correo inválido. Por favor, intente nuevamente.")
                     correo = input("Ingrese su correo electrónico: ")
-                    
-                    # Verificar si contiene '@' y un '.' después del '@'
-                    if "@" in correo and "." in correo.split("@")[-1]:
-                        print("Correo válido.")
-                        break  # Salir del bucle si es válido
-                    else:
-                        print("Correo inválido. Por favor, intente nuevamente.")
                 direccion = input ("Ingrese su dirección de envio")
                 telefono = input ("Ingrese su telefono")
                 es_juridico = input ("Es cliente jurídico: (1)-Si (2)-No")
                 if es_juridico == "Si":
                     print("Es persona jurídica")
                     nombre_contacto = input("Ingrese el nombre de la persona de contacto")
-                    while True:
-                        telefono_contacto = input("Ingrese el teléfono de la persona de contacto: ")
+                    # Verificar que no contenga números
+                    while any(char.isdigit() for char in nombre_apellido):
+                        print("El nombre no debe contener números. Inténtelo de nuevo.")
+                        nombre_contacto = input("Ingrese el nombre de la persona de contacto : ")
 
-                        # Verificar que solo contenga dígitos y tenga entre 7 y 15 caracteres (rango común para números telefónicos)
-                        if telefono_contacto.isdigit() and 7 <= len(telefono_contacto) <= 15:
-                            print("Teléfono válido.")
-                            break  # Salir del bucle si es válido
-                        else:
-                            print("Teléfono inválido. Por favor, ingrese un número válido (solo dígitos, entre 7 y 15 caracteres).")
+                    telefono_contacto = input("Ingrese el teléfono de la persona de contacto: ")
+                    # Bucle para verificar si el teléfono es válido
+                    while not (telefono_contacto.isdigit() and 7 <= len(telefono_contacto) <= 15):
+                        print("Teléfono inválido. Por favor, ingrese un número válido (solo dígitos, entre 7 y 15 caracteres).")
+                        telefono_contacto = input("Ingrese el teléfono de la persona de contacto: ")
+                    
                     correo_contacto = input("Ingrese el correo de la persona de contacto")
+                    # Bucle para verificar si el correo es válido
+                    while not ("@" in correo_contacto and "." in correo_contacto.split('@')[-1]):
+                        print("El correo no es válido. Asegúrese de que contenga un '@' y un dominio.")
+                        correo_contacto = input("Ingrese el correo de la persona de contacto: ")
+
                     cliente_juridico = ClienteJuridico(nombre_apellido,cedula,correo,direccion,telefono,nombre_contacto,telefono_contacto,correo_contacto)
                     clientes.append(cliente_juridico)
                     print (cliente_juridico.mostrarCliente())
@@ -1311,7 +1327,7 @@ def main():
                 print("\nInforme de Envíos:")
                 generar_informe_envios(envios)
                 productos_mas_enviados(envios)
-                clientes_con_envios_pendientes(envios)
+                #clientes_con_envios_pendientes(envios)
             elif opcion == '4':
                 print("Saliendo del menú...")
                 break
