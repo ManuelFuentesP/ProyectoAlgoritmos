@@ -102,8 +102,13 @@ def comprarProductosPorNombre(productos_objeto):
                     producto_seleccionado = productos_encontrados[seleccion - 1]
                     cantidad = int(input(f"Ingrese la cantidad de '{producto_seleccionado.name}' que desea comprar: "))
                     if cantidad > 0:
-                        productos_comprados.append({'producto': producto_seleccionado, 'cantidad': cantidad})
-                        print(f"Se agregó {cantidad} unidad(es) de '{producto_seleccionado.name}' a su carrito.")
+                        if cantidad <= producto_seleccionado.inventory:
+                            # Reducir del inventario y agregar al carrito
+                            producto_seleccionado.inventory -= cantidad
+                            productos_comprados.append({'producto': producto_seleccionado, 'cantidad': cantidad})
+                            print(f"Se agregó {cantidad} unidad(es) de '{producto_seleccionado.name}' a su carrito.")
+                        else:
+                            print(f"Lo sentimos, solo hay {producto_seleccionado.inventory} unidad(es) disponibles en inventario.")
                     else:
                         print("La cantidad debe ser mayor que 0.")
                 else:
@@ -112,6 +117,32 @@ def comprarProductosPorNombre(productos_objeto):
                 print("Entrada no válida. Intente nuevamente.")
 
     return productos_comprados
+
+def guardarCambiosProductos(productos_objeto):
+    '''
+    Función que guarda los cambios en los productos en el archivo JSON.
+    '''
+    datos_actualizados = []
+    for producto in productos_objeto:
+        # Aseguramos que estamos extrayendo los datos correctamente para guardarlos en JSON
+        producto_dict = {
+            "id": producto.id,
+            "name": producto.name,
+            "description": producto.description,
+            "price": producto.price,
+            "category": producto.category,
+            "inventory": producto.inventory,
+            "compatible_vehicles": producto.compatible_vehicles
+        }
+        datos_actualizados.append(producto_dict)
+
+    # Abre el archivo en modo escritura para sobrescribir con los cambios actualizados
+    try:
+        with open('productos.json', 'w', encoding='utf-8') as archivo_productos:
+            json.dump(datos_actualizados, archivo_productos, ensure_ascii=False, indent=2)
+        print("Inventario actualizado y guardado con éxito.")
+    except Exception as e:
+        print(f"Error al guardar los cambios: {e}")
 
 def buscarProductosPorDisponibilidad(productos_objeto):
     '''
@@ -783,6 +814,7 @@ def main():
                     print("El número de cédula no será guardado porque el cliente no fue encontrado.")
                 
                 productos_comprados = comprarProductosPorNombre(productos_objeto)
+                guardarCambiosProductos(productos_objeto)
 
                 if productos_comprados:
                     print("\nResumen de productos comprados:")
@@ -791,15 +823,15 @@ def main():
                     descuento = 0  # Inicializar el descuento
                     iva = 0  # Inicializar el IVA
                     igtf = 0  # Inicializar el IGTF
-                    
+
                     # Lista para guardar los productos con su cantidad
                     productos_guardados = []
 
                     # Selección del método de pago por parte del usuario
                     metodo_pago = None
-                    while metodo_pago not in ['efectivo', 'tarjeta', 'transferencia']:
-                        metodo_pago = input("Selecciona el método de pago (efectivo, tarjeta, transferencia): ").lower()
-                        if metodo_pago not in ['efectivo', 'tarjeta', 'transferencia']:
+                    while metodo_pago not in ['punto de venta', 'pago móvil', 'transferencia', 'zelle', 'paypal', 'efectivo']:
+                        metodo_pago = input("Selecciona el método de pago (punto de venta, pago móvil, transferencia, Zelle, PayPal, efectivo): ").lower()
+                        if metodo_pago not in ['punto de venta', 'pago móvil', 'transferencia', 'zelle', 'paypal', 'efectivo']:
                             print("Método de pago no válido. Por favor selecciona uno de los métodos válidos.")
 
                     paga_en_divisas = False  # Cambiar a True si paga en divisas
@@ -856,12 +888,13 @@ def main():
 
                 else:
                     print("\nNo se registraron productos comprados.")
-                
-                metodo_envio = input ("Ingrese metodo de envio Zoom o Delivery por moto")
+
+                metodo_envio = input("Ingrese metodo de envio Zoom o Delivery por moto: ")
                 fecha_venta = obtener_fecha_venta()
-                print (fecha_venta)
-                
-                venta = Venta(num_cedula,productos_comprados, metodo_pago, metodo_envio, total_con_descuentos_iva_igtf, fecha_venta)
+                print(fecha_venta)
+                pago = False
+
+                venta = Venta(num_cedula, productos_comprados, metodo_pago, metodo_envio, total_con_descuentos_iva_igtf, fecha_venta, pago)
                 ventas.append(venta)
                     
             elif mod2 == "2":
@@ -963,14 +996,30 @@ def main():
             if opt =="1":
                 nombre_apellido = input ("Ingrese el Nombre y Apellido o Razón Social")
                 cedula = input ("Ingrese el numero de cedula")
-                correo = input ("Ingrese su correo electronico")
+                while True:
+                    correo = input("Ingrese su correo electrónico: ")
+                    
+                    # Verificar si contiene '@' y un '.' después del '@'
+                    if "@" in correo and "." in correo.split("@")[-1]:
+                        print("Correo válido.")
+                        break  # Salir del bucle si es válido
+                    else:
+                        print("Correo inválido. Por favor, intente nuevamente.")
                 direccion = input ("Ingrese su dirección de envio")
                 telefono = input ("Ingrese su telefono")
                 es_juridico = input ("Es cliente jurídico: (1)-Si (2)-No")
                 if es_juridico == "Si":
                     print("Es persona jurídica")
                     nombre_contacto = input("Ingrese el nombre de la persona de contacto")
-                    telefono_contacto = input("Ingrese el telefono de la persona de contacto")
+                    while True:
+                        telefono_contacto = input("Ingrese el teléfono de la persona de contacto: ")
+
+                        # Verificar que solo contenga dígitos y tenga entre 7 y 15 caracteres (rango común para números telefónicos)
+                        if telefono_contacto.isdigit() and 7 <= len(telefono_contacto) <= 15:
+                            print("Teléfono válido.")
+                            break  # Salir del bucle si es válido
+                        else:
+                            print("Teléfono inválido. Por favor, ingrese un número válido (solo dígitos, entre 7 y 15 caracteres).")
                     correo_contacto = input("Ingrese el correo de la persona de contacto")
                     cliente_juridico = ClienteJuridico(nombre_apellido,cedula,correo,direccion,telefono,nombre_contacto,telefono_contacto,correo_contacto)
                     clientes.append(cliente_juridico)
@@ -1021,6 +1070,11 @@ def main():
                     pago_nuevo = Pago(num_cedula, tipo_pago, moneda_pago, fecha_pago)
                     print(f"Pago nuevo registrado: {num_cedula}, {tipo_pago}, {moneda_pago}")
                     pagos.append(pago_nuevo.MostrarPago())
+
+                    # Actualizar el estado de la venta a pagada (pago=True)
+                    venta_encontrada.pago = True
+                    print(f"Estado de la venta actualizada a: Pago procesado.")
+
                 else:
                     print("No se realizó ninguna operación porque la venta no fue encontrada.")
             elif mod4 == "2":
