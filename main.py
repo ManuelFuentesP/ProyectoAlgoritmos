@@ -706,26 +706,73 @@ def buscarEnvioPorFecha(envios):
 def generar_informe_ventas(ventas):
     fecha_hoy = datetime.today()
 
-    # Filtrar ventas por rango de fechas
-    ventas_dia = [venta for venta in ventas if venta.fecha_venta[:10] == fecha_hoy.strftime('%Y-%m-%d')]
-    ventas_semana = [venta for venta in ventas if (fecha_hoy - datetime.strptime(venta.fecha_venta[:10], '%Y-%m-%d')).days < 7]
-    ventas_mes = [venta for venta in ventas if (fecha_hoy.month == datetime.strptime(venta.fecha_venta[:10], '%Y-%m-%d').month) and (fecha_hoy.year == datetime.strptime(venta.fecha_venta[:10], '%Y-%m-%d').year)]
-    ventas_anio = [venta for venta in ventas if fecha_hoy.year == datetime.strptime(venta.fecha_venta[:10], '%Y-%m-%d').year]
+    # Inicializar variables para los totales
+    total_dia = 0
+    total_semana = 0
+    total_mes = 0
+    total_anio = 0
 
-    # Mostrar ventas totales
-    print(f"Ventas Totales:")
-    print(f"Hoy: {len(ventas_dia)} ventas")
-    print(f"Semana: {len(ventas_semana)} ventas")
-    print(f"Mes: {len(ventas_mes)} ventas")
-    print(f"Año: {len(ventas_anio)} ventas")
+    # Filtrar ventas por rango de fechas
+    ventas_dia = []
+    ventas_semana = []
+    ventas_mes = []
+    ventas_anio = []
+
+    for venta in ventas:
+        fecha_venta = datetime.strptime(venta.fecha_venta[:10], '%Y-%m-%d')  # Convertir la fecha de venta en datetime
+
+        # Verificar si la venta corresponde al día actual
+        if fecha_venta.date() == fecha_hoy.date():
+            ventas_dia.append(venta)
+            total_dia += venta.total  # Acumular el total de ventas de hoy
+
+        # Verificar si la venta corresponde a la semana actual (últimos 7 días)
+        if (fecha_hoy - fecha_venta).days < 7:
+            ventas_semana.append(venta)
+            total_semana += venta.total  # Acumular el total de ventas de la semana
+
+        # Verificar si la venta corresponde al mes actual
+        if fecha_hoy.month == fecha_venta.month and fecha_hoy.year == fecha_venta.year:
+            ventas_mes.append(venta)
+            total_mes += venta.total  # Acumular el total de ventas del mes
+
+        # Verificar si la venta corresponde al año actual
+        if fecha_hoy.year == fecha_venta.year:
+            ventas_anio.append(venta)
+            total_anio += venta.total  # Acumular el total de ventas del año
+
+    # Mostrar el informe
+    print(f"\n--- Informe de Ventas ---")
+    print(f"\nVentas Totales:")
+
+    print(f"\n--- Hoy ---")
+    print(f"Ventas: {len(ventas_dia)}")
+    print(f"Total: ${total_dia:.2f}")
+    
+    print(f"\n--- Esta Semana ---")
+    print(f"Ventas: {len(ventas_semana)}")
+    print(f"Total: ${total_semana:.2f}")
+    
+    print(f"\n--- Este Mes ---")
+    print(f"Ventas: {len(ventas_mes)}")
+    print(f"Total: ${total_mes:.2f}")
+    
+    print(f"\n--- Este Año ---")
+    print(f"Ventas: {len(ventas_anio)}")
+    print(f"Total: ${total_anio:.2f}")
 
 def productos_mas_vendidos(ventas):
+    # Lista para almacenar todos los productos vendidos
     productos = []
+    
+    # Iterar sobre cada venta y agregar los productos de esa venta
     for venta in ventas:
         productos.extend(venta.productos)  # Suponiendo que 'productos' es una lista de productos de cada venta
 
+    # Contar la frecuencia de cada producto
     productos_mas_comunes = Counter(productos)
     
+    # Mostrar los productos más vendidos (hasta 5)
     print("Productos más vendidos:")
     for producto, cantidad in productos_mas_comunes.most_common(5):  # Mostrar los 5 más vendidos
         print(f"{producto}: {cantidad}")
